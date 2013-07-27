@@ -1,0 +1,178 @@
+Glossary
+--------
+角色 role
+  管理员 administrator
+  普通用户 user
+
+普通用户动作 action
+  登录
+    login.php --> user-login.php
+  查询药品
+    drugs.php
+    申请使用药品
+      --> apply.php
+  查询未处理申请结果
+  查询已处理申请结果
+    my-applications.php
+
+管理员动作 action
+  登录
+    login.php --> admin-login.php
+  查询药品
+    admin-drugs.php
+    添加药品
+      --> create-drug.php
+    编辑药品
+      --> update-drug.php
+    删除药品
+      (ajax) --> delete-drug.php
+    增加药品库存
+      (ajax) --> add-drug.php
+  查询药品更改历史记录
+    history.php
+  查询待处理使用申请
+  查询已处理使用申请
+    all-applications.php
+    处理使用申请（批准或不批准）
+      --> update-application.php
+  查看库存提醒
+    notifications.php
+
+-----
+
+首页 index.php
+  如果未登录 --> login.php
+  如果已登录 --> drugs.php 或 admin-drugs.php
+
+Session design:
+  $_SESSION['username']
+  $_SESSION['is_admin']
+
+Password hashing policy:
+
+  hashed_password = SHA1(username + SHA1(password))
+
+本地脚本可以管理用户
+
+-----
+
+实体 entity
+  管理员
+  普通用户
+  药品（包括库存设置）
+  药品使用申请
+  药品更改记录
+  库存提醒
+  用户更改记录
+
+管理员 administrators
+  用户名 username varchar(40) not null primary
+  密码 hashed_password char(40) not null
+  姓名 name varchar(40) not null
+
+create table administrators
+(
+  username varchar(40) not null,
+  hashed_password char(40) not null,
+  name varchar(40) not null,
+  primary key (username)
+);
+
+普通用户 users
+  用户名 username varchar(40) not null primary
+  密码 hashed_password char(40) not null
+  姓名 name varchar(40) not null
+
+create table users
+(
+  username varchar(40) not null,
+  hashed_password char(40) not null,
+  name varchar(40) not null,
+  primary key (username)
+);
+
+药品 drugs
+  药品编号 id unsigned bigint not null primary
+  药品名称 name varchar(200) not null
+  库存 inventory int not null
+  毒性 toxicity tinyint not null
+
+create table drugs
+(
+  id bigint unsigned not null auto_increment,
+  name varchar(200) not null,
+  inventory int unsigned not null,
+  toxicity tinyint not null,
+  primary key (id)
+);
+
+药品使用申请 applications
+  申请编号 id unsigned bigint not null primary
+  申请人用户名 applicant varchar(40) not null
+  申请时间 apply_time timestamp not null
+  申请药品编号 drug_id unsigned bigint not null
+  申请药品剂量 applied_dosage int not null
+  批准编号 approval_id unsigned bigint null
+
+create table applications
+(
+  id bigint unsigned not null auto_increment,
+  applicant varchar(40) not null,
+  apply_time timestamp not null,
+  drug_id bigint unsigned not null,
+  applied_dosage int unsigned not null,
+  approval_id bigint unsigned null,
+  primary key (id)
+);
+
+批准 approvals
+  批准编号 id unsigned bigint not null primary
+  批准人用户名 approved_by varchar(40) not null
+  批准时间 approve_time timestamp not null
+  批准药品剂量 approved_dosage int not null
+
+create table approvals
+(
+  id bigint unsigned not null auto_increment,
+  approved_by varchar(40) null,
+  approve_time timestamp not null,
+  approved_dosage int unsigned not null,
+  primary key (id)
+);
+
+药品更改记录 drug_update_records
+  记录编号 id unsigned bigint not null primary
+  药品编号 drug_id unsigned bigint not null
+  药品名称 drug_name varchar(200) not null
+  更改时间 update_time timestamp not null
+  操作人用户名 operator varchar(40) not null
+  操作类别（添加、编辑、删除、增加库存） operation tinyint not null
+
+create table drug_update_records
+(
+  id bigint unsigned not null auto_increment,
+  drug_id bigint unsigned not null,
+  drug_name varchar(200) not null,
+  update_time timestamp not null,
+  operator varchar(40) not null,
+  operation tinyint not null,
+  primary key (id)
+);
+
+库存提醒 inventory_notifications
+  提醒编号 id unsigned bigint not null primary
+  药品编号 drug_id unsigned bigint not null
+  提醒时间 create_time timestamp not null
+  提醒时库存量 inventory int not null
+
+create table inventory_notifications
+(
+  id bigint unsigned not null auto_increment,
+  drug_id bigint unsigned not null,
+  create_time timestamp not null,
+  inventory int unsigned not null,
+  primary key (id)
+);
+
+TODO: trigger
+TODO: foreign key constraints
